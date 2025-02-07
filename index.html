@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diario de Fotos</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: "Times New Roman", serif;
+        }
+        .galeria {
+            display: flex;
+            flex-wrap: wrap;
+        }
+        .foto {
+            flex: 1 1 20%;
+            text-align: left;
+            cursor: pointer;
+            transition: flex 0.3s ease;
+        }
+        .foto img {
+            width: 100%;
+            display: block;
+        }
+        .pie {
+            font-size: 16px;
+            color: black;
+            text-align: left;
+            word-wrap: break-word;
+        }
+        .zoom {
+            flex: 2 1 40% !important;
+        }
+        @media (max-width: 768px) {
+            .foto {
+                flex: 1 1 100%;
+            }
+            .pie {
+                font-size: 14.4px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="galeria" id="galeria"></div>
+    
+    <script>
+        // Repositorio donde están las imágenes
+        const usuario = "cdsbranding";
+        const repositorio = "archivecds";
+        const carpeta = "Publicaciones";
+        
+        async function cargarImagenes() {
+            try {
+                const respuesta = await fetch(`https://api.github.com/repos/${usuario}/${repositorio}/contents/${carpeta}`);
+                const archivos = await respuesta.json();
+                
+                // Filtrar solo imágenes JPG, JPEG y GIF, y ordenarlas por número en el nombre del archivo (de mayor a menor)
+                const imagenes = archivos.filter(archivo => archivo.name.match(/\.(jpg|jpeg|gif)$/i))
+                    .sort((a, b) => {
+                        const numA = parseInt(a.name.match(/^\d+/) || 0, 10);
+                        const numB = parseInt(b.name.match(/^\d+/) || 0, 10);
+                        return numB - numA;
+                    });
+                
+                // Generar HTML para cada imagen
+                const galeria = document.getElementById("galeria");
+                galeria.innerHTML = "";
+                imagenes.forEach(imagen => {
+                    const div = document.createElement("div");
+                    div.classList.add("foto");
+                    div.innerHTML = `
+                        <img src="${imagen.download_url}" alt="${imagen.name}">
+                        <div class="pie">${imagen.name.replace(/\.(jpg|jpeg|gif)/i, "").replace(/-/g, " ")}</div>
+                    `;
+                    div.addEventListener("click", () => {
+                        div.classList.toggle("zoom");
+                    });
+                    galeria.appendChild(div);
+                });
+            } catch (error) {
+                console.error("Error al cargar imágenes:", error);
+            }
+        }
+        
+        // Ejecutar función al cargar la página
+        cargarImagenes();
+    </script>
+</body>
+</html>
